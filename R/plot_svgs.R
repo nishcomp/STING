@@ -1,6 +1,6 @@
-#' plot_spatial_genes
+#' plot_svgs
 #'
-#' Visualizes spatially variable genes (SVGs) as a circular graph, showing the relationships between genes,
+#' Visualizes spatially variable genes (SVGs) as either a circular or linear graph, showing the relationships between genes,
 #' their Moran's I values, and their categories.
 #'
 #' @param df A data frame containing at least the following columns:
@@ -10,17 +10,39 @@
 #'     \item \code{category}: Categories or clusters to which genes belong.
 #'   }
 #' @param title A character string specifying the title of the plot. Default is "Spatially Variable Genes".
+#' @param type A character string indicating the type of plot to create. Options are:
+#'   \itemize{
+#'     \item \code{"circular"}: A circular graph layout.
+#'     \item \code{"linear"}: A linear graph layout.
+#'   }
+#'   Default is \code{"circular"}.
+#' @param output_file A character string specifying the path to save the plot as a file (e.g., "plot.png").
+#'   If \code{NULL} (the default), the plot is not saved to a file.
 #'
-#' @return A ggplot object visualizing the spatially variable genes in a circular graph layout.
+#' @return A ggplot object visualizing the spatially variable genes in the chosen graph layout.
 #'
 #' @details
-#' This function creates a circular graph layout where:
+#' This function creates a graph layout where:
 #' \itemize{
 #'   \item Nodes represent genes, with sizes corresponding to Moran's I values.
 #'   \item Edges connect all genes to each other, except for self-connections.
 #'   \item Nodes are colored based on their categories.
 #' }
-#' Labels are adjusted to prevent overlap and ensure readability in the circular layout.
+#' Labels are adjusted to prevent overlap and ensure readability.
+#'
+#' For the circular layout:
+#' \itemize{
+#'   \item Nodes are arranged in a circular pattern.
+#'   \item Labels are placed around the circumference of the circle.
+#'   \item Node sizes represent Moran's I values, and colors correspond to gene categories.
+#' }
+#'
+#' For the linear layout:
+#' \itemize{
+#'   \item Nodes are arranged along the x-axis according to their category and Moran's I values.
+#'   \item Labels are placed along the graph, with adjustments to prevent overlap.
+#'   \item Node sizes represent Moran's I values, and colors correspond to gene categories.
+#' }
 #'
 #' @examples
 #' \dontrun{
@@ -36,9 +58,13 @@
 #'   category = sample(letters[1:3], 10, replace = TRUE)
 #' )
 #'
-#' # Create plot
-#' p <- plot_spatial_genes(df, title = "Example SVGs Plot")
-#' print(p)
+#' # Create circular plot
+#' p_circular <- plot_svgs(df, title = "Circular SVGs Plot", type = "circular")
+#' print(p_circular)
+#'
+#' # Create linear plot
+#' p_linear <- plot_svgs(df, title = "Linear SVGs Plot", type = "linear")
+#' print(p_linear)
 #' }
 #'
 #' @import igraph
@@ -105,4 +131,3 @@ plot_svgs <- function(df, title = "Spatially Variable Genes", type = c("circular
 
   return(p)
 }
-
