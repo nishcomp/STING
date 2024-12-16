@@ -18,5 +18,5 @@ hello <- function() {
 }
 
 plot_line <- function(x,y){
-  plot(x,y)
+  plot(x^2,y^2)
 }
