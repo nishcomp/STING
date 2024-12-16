@@ -19,4 +19,5 @@ Imports:
     igraph,
     spdep,
     sf,
-    ggplot2
+    ggplot2,
+    ggrepl

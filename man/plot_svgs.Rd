@@ -4,7 +4,11 @@
 \alias{plot_svgs}
 \title{plot_spatial_genes}
 \usage{
-plot_svgs(df, title = "Spatially Variable Genes")
+plot_svgs(
+  df,
+  title = "Spatially Variable Genes",
+  type = c("circular", "linear")
+)
 }
 \arguments{
 \item{df}{A data frame containing at least the following columns:
