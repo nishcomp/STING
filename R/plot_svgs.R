@@ -46,7 +46,7 @@
 #' @import dplyr
 #' @import RColorBrewer
 #' @import ggplot2
-#' @import ggrepl
+#' @import ggrepel
 #' @export
 plot_svgs <- function(df, title = "Spatially Variable Genes", type = c("circular", "linear"), output_file = NULL) {
   type <- match.arg(type)

@@ -20,4 +20,4 @@ Imports:
     spdep,
     sf,
     ggplot2,
-    ggrepl
+    ggrepel

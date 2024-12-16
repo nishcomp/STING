@@ -7,7 +7,8 @@
 plot_svgs(
   df,
   title = "Spatially Variable Genes",
-  type = c("circular", "linear")
+  type = c("circular", "linear"),
+  output_file = NULL
 )
 }
 \arguments{
