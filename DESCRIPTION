@@ -12,11 +12,11 @@ LazyData: true
 RoxygenNote: 7.3.2
 Imports:
     RColorBrewer,
-    dplyr,
     foreach,
     future,
     ggraph,
     igraph,
+    dplyr
     spdep,
     sf,
     ggplot2,
