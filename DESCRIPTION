@@ -12,7 +12,6 @@ LazyData: true
 RoxygenNote: 7.3.2
 Imports:
     RColorBrewer,
-    dplyr,
     foreach,
     future,
     ggraph,
@@ -20,4 +19,5 @@ Imports:
     spdep,
     sf,
     ggplot2,
-    ggrepel
+    ggrepel,
+    dplyr

@@ -84,4 +84,10 @@ p_linear <- plot_svgs(df, title = "Linear SVGs Plot", type = "linear")
 print(p_linear)
 }
 
+import::from(dplyr, arrange, desc, mutate, group_by, row_number, ungroup)
+import::from(igraph, graph_from_data_frame)
+import::from(ggraph, ggraph, geom_node_point, geom_node_text)
+import::from(ggplot2, ggplot, aes, geom_point, scale_size_continuous, scale_fill_brewer, theme_bw, element_blank, labs)
+import::from(RColorBrewer, brewer.pal)
+import::from(ggrepel, geom_text_repel)
 }
