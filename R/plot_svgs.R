@@ -47,8 +47,8 @@
 #' @examples
 #' \dontrun{
 #' library(igraph)
-#' library(ggraph)
 #' library(dplyr)
+#' library(ggraph)
 #' library(RColorBrewer)
 #'
 #' # Example data
