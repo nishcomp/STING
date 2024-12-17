@@ -67,9 +67,9 @@
 #' print(p_linear)
 #' }
 #'
+#' @import dplyr
 #' @import igraph
 #' @import ggraph
-#' @import dplyr
 #' @import RColorBrewer
 #' @import ggplot2
 #' @import ggrepel
