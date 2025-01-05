@@ -13,11 +13,14 @@ RoxygenNote: 7.3.2
 Imports:
     RColorBrewer,
     foreach,
-    future,
     ggraph,
     igraph,
     spdep,
     sf,
     ggplot2,
     ggrepel,
-    dplyr
+    dplyr,
+    Seurat,
+    doParallel,
+    parallel,
+    stats

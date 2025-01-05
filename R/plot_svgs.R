@@ -9,6 +9,11 @@
 #'     \item \code{I}: Moran's I statistic values for spatial autocorrelation.
 #'     \item \code{category}: Categories or clusters to which genes belong.
 #'   }
+#'
+#' @param genes A column of gene names.
+#' @param morans A column of Moran's I statistics.
+#' @param category The category or grouping variable for the genes.
+#' @param range Lower/upper ceilings for dot size. Default is (3,10)
 #' @param title A character string specifying the title of the plot. Default is "Spatially Variable Genes".
 #' @param type A character string indicating the type of plot to create. Options are:
 #'   \itemize{
@@ -25,7 +30,6 @@
 #' This function creates a graph layout where:
 #' \itemize{
 #'   \item Nodes represent genes, with sizes corresponding to Moran's I values.
-#'   \item Edges connect all genes to each other, except for self-connections.
 #'   \item Nodes are colored based on their categories.
 #' }
 #' Labels are adjusted to prevent overlap and ensure readability.
@@ -67,21 +71,25 @@
 #' print(p_linear)
 #' }
 #'
-#' import::from(dplyr, arrange, desc, mutate, group_by, row_number, ungroup)
-#' import::from(igraph, graph_from_data_frame)
-#' import::from(ggraph, ggraph, geom_node_point, geom_node_text)
-#' import::from(ggplot2, ggplot, aes, geom_point, scale_size_continuous, scale_fill_brewer, theme_bw, element_blank, labs)
-#' import::from(RColorBrewer, brewer.pal)
-#' import::from(ggrepel, geom_text_repel)
+#' @importFrom dplyr arrange desc mutate group_by row_number ungroup
+#' @importFrom igraph graph_from_data_frame
+#' @importFrom ggraph ggraph geom_node_point geom_node_text
+#' @importFrom ggplot2 ggplot aes geom_point scale_size_continuous scale_fill_brewer theme_bw element_blank labs
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom ggrepel geom_text_repel
+
 #' @export
-plot_svgs <- function(df, title = "Spatially Variable Genes", type = c("circular", "linear"), output_file = NULL) {
+plot_svgs <- function(df, title = "Spatially Variable Genes", type = c("circular", "linear"), genes = "genes",
+                      morans = "I", category = "category",
+                      range = c(3, 10),
+                      output_file = NULL) {
   type <- match.arg(type)
 
   # Validate input data frame
-  required_cols <- c("genes", "I", "category")
-  if (!all(required_cols %in% colnames(df))) {
-    stop("Input data frame must contain columns: 'genes', 'I', and 'category'.")
-  }
+  #required_cols <- c("genes", "I", "category")
+  #if (!all(required_cols %in% colnames(df))) {
+    #stop("Input data frame must contain columns: 'genes', 'I', and 'category'.")
+  #}
 
   if (type == "circular") {
     # Sort the dataframe by category and I value
@@ -126,7 +134,7 @@ plot_svgs <- function(df, title = "Spatially Variable Genes", type = c("circular
       ggraph::geom_node_point(aes(x = x * 1.05, y = y * 1.05, size = value, color = category), alpha = 0.8) +
       ggraph::geom_node_text(aes(x = x * 1.2, y = y * 1.2, label = name, angle = angle, hjust = hjust),
                              size = 3, vjust = 0.5) +
-      ggplot2::scale_size_continuous(range = c(3, 10)) +
+      ggplot2::scale_size_continuous(range = range) +
       ggplot2::scale_color_manual(values = category_colors) +
       ggplot2::theme_void() +
       ggplot2::theme(
@@ -158,7 +166,7 @@ plot_svgs <- function(df, title = "Spatially Variable Genes", type = c("circular
         min.segment.length = 0,
         max.overlaps = Inf
       ) +
-      ggplot2::scale_size_continuous(range = c(2, 8), name = "I Value") +  # Adjust size range and add a legend title
+      ggplot2::scale_size_continuous(range = range, name = "I Value") +  # Adjust size range and add a legend title
       ggplot2::scale_fill_brewer(palette = "Set2", name = "Category") +
       ggplot2::theme_bw() +
       ggplot2::theme(title = ggplot2::element_text(face = "bold", hjust = "center"),

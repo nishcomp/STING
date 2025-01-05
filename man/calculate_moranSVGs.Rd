@@ -5,58 +5,77 @@
 \title{calculate_moranSVGs}
 \usage{
 calculate_moranSVGs(
-  expr_data,
-  weights,
-  chunk_size = 150,
-  cores = future::availableCores() - 1
+  sample_name,
+  sample,
+  output_path = NULL,
+  layer = "data",
+  method = "knns",
+  k = 20,
+  dist = 10,
+  bin = 8
 )
 }
 \arguments{
-\item{expr_data}{A numeric matrix or data frame where rows represent genes and columns represent spatial spots or cells.}
+\item{sample_name}{A character string specifying the name of the sample being processed. This will be used in messages and output filenames.}
 
-\item{weights}{A spatial weights matrix or listw object created using `spdep` for spatial autocorrelation calculations.}
+\item{sample}{A Seurat object containing the spatial transcriptomics data for the sample.}
 
-\item{chunk_size}{Integer, optional (default = 150). The number of genes to process in each chunk. Helps manage memory usage and parallel processing.}
+\item{output_path}{A character string specifying the directory where the output CSV file will be saved. If \code{NULL}, the results will not be saved to a file. Default is \code{NULL}.}
 
-\item{cores}{Integer, optional (default = `future::availableCores() - 1`). The number of cores to use for parallel processing. The default utilizes all but one available core.}
+\item{layer}{A character string indicating the assay layer to use for expression data. Default is \code{"data"}.}
+
+\item{method}{A character string specifying the method to calculate spatial neighbors. Options are:
+\itemize{
+  \item \code{"knns"}: Uses k-nearest neighbors.
+  \item \code{"distance"}: Uses a distance threshold to determine neighbors.
+}
+Default is \code{"knns"}.}
+
+\item{k}{An integer specifying the number of nearest neighbors to consider when \code{method = "knns"}. Default is \code{20}.}
+
+\item{dist}{A numeric value specifying the distance threshold (in microns) for neighbor determination when \code{method = "distance"}. Default is \code{10}.}
+
+\item{bin}{A numeric value representing the binning size in microns per pixel. Default is \code{8}.}
 }
 \value{
-A data frame with the following columns:
+A data frame containing the spatially variable genes and their Moran's I statistics. The data frame includes:
 \itemize{
-  \item \code{I}: The Moran's I statistic for each gene.
-  \item \code{p.value}: The raw p-value associated with the test of spatial autocorrelation.
-  \item \code{Adjusted_P}: The FDR-adjusted p-value for each gene.
+  \item \code{gene}: Gene name or identifier.
+  \item \code{I}: Moran's I statistic.
+  \item \code{p.value}: P-value for the Moran's I test.
+  \item \code{Adjusted_P}: Adjusted p-value (FDR corrected).
 }
-The rows of the data frame are ordered by Moran's I statistic in descending order.
 }
 \description{
-Computes Moran's I spatial autocorrelation statistic for genes in spatial transcriptomics data.
+Computes spatially variable genes (SVGs) using Moran's I statistic, saves the results to a CSV file if an output path is provided, and returns the results as a data frame.
 }
 \details{
-This function computes Moran's I statistic for each gene in the spatial transcriptomics dataset, testing for spatial autocorrelation.
-It uses parallel processing via the `future` and `foreach` packages to optimize computations across multiple cores.
-
-The results include raw p-values for Moran's I statistic and adjusted p-values corrected using the false discovery rate (FDR) method.
+This function identifies spatially variable genes by:
+\itemize{
+  \item Calculating spatial neighbors based on either k-nearest neighbors (\code{"knns"}) or distance thresholds (\code{"distance"}).
+  \item Computing Moran's I statistic for each gene's expression values to assess spatial autocorrelation.
+  \item Adjusting p-values using the False Discovery Rate (FDR) method.
+}
+If an \code{output_path} is provided, the results are saved in a CSV file named \code{"<sample_name>_spatially_variable_genes.csv"} in the specified directory.
 }
 \examples{
 \dontrun{
-# Example usage:
+library(Seurat)
 library(spdep)
-library(future)
+library(doParallel)
 library(foreach)
 
-# Simulated spatial transcriptomics data (100 genes, 20 spots)
-set.seed(123)
-expr_data <- matrix(rnorm(2000), nrow = 100, ncol = 20)
-rownames(expr_data) <- paste0("Gene_", 1:100)
+# Example usage
+sample_name <- "Sample_1"
+sample <- CreateSeuratObject(counts = matrix(rpois(2000, lambda = 10), nrow = 100, ncol = 20))
+output_path <- "~/output/"
 
-# Create spatial weights
-coords <- cbind(runif(20), runif(20)) # Simulated coordinates
-nb <- knn2nb(knearneigh(coords, k = 5)) # Neighbors based on k=5
-weights <- nb2listw(nb, style = "W")
-
-# Calculate Moran's I
-results <- calculate_moranSVGs(expr_data, weights)
-head(results)
+results <- calculate_moranSVGs(sample_name = sample_name,
+                               sample = sample,
+                               output_path = output_path,
+                               layer = "data",
+                               method = "knns",
+                               k = 15)
 }
+
 }

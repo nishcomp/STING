@@ -8,6 +8,10 @@ plot_svgs(
   df,
   title = "Spatially Variable Genes",
   type = c("circular", "linear"),
+  genes = "genes",
+  morans = "I",
+  category = "category",
+  range = c(3, 10),
   output_file = NULL
 )
 }
@@ -28,6 +32,14 @@ plot_svgs(
 }
 Default is \code{"circular"}.}
 
+\item{genes}{A column of gene names.}
+
+\item{morans}{A column of Moran's I statistics.}
+
+\item{category}{The category or grouping variable for the genes.}
+
+\item{range}{Lower/upper ceilings for dot size. Default is (3,10)}
+
 \item{output_file}{A character string specifying the path to save the plot as a file (e.g., "plot.png").
 If \code{NULL} (the default), the plot is not saved to a file.}
 }
@@ -42,7 +54,6 @@ their Moran's I values, and their categories.
 This function creates a graph layout where:
 \itemize{
   \item Nodes represent genes, with sizes corresponding to Moran's I values.
-  \item Edges connect all genes to each other, except for self-connections.
   \item Nodes are colored based on their categories.
 }
 Labels are adjusted to prevent overlap and ensure readability.
@@ -84,10 +95,4 @@ p_linear <- plot_svgs(df, title = "Linear SVGs Plot", type = "linear")
 print(p_linear)
 }
 
-import::from(dplyr, arrange, desc, mutate, group_by, row_number, ungroup)
-import::from(igraph, graph_from_data_frame)
-import::from(ggraph, ggraph, geom_node_point, geom_node_text)
-import::from(ggplot2, ggplot, aes, geom_point, scale_size_continuous, scale_fill_brewer, theme_bw, element_blank, labs)
-import::from(RColorBrewer, brewer.pal)
-import::from(ggrepel, geom_text_repel)
 }
