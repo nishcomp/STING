@@ -5,24 +5,24 @@
 \title{calculate_moranSVGs}
 \usage{
 calculate_moranSVGs(
-  sample_name,
-  sample,
+  seurat_obj,
+  sample_name = seurat_obj@project.name,
   output_path = NULL,
-  layer = "data",
-  method = "knns",
-  k = 20,
-  dist = 10,
-  bin = 8
+  layer = "counts",
+  k = 50,
+  min_count = 10
 )
 }
 \arguments{
-\item{sample_name}{A character string specifying the name of the sample being processed. This will be used in messages and output filenames.}
+\item{seurat_obj}{A Seurat object containing the spatial transcriptomics data for the sample.}
 
-\item{sample}{A Seurat object containing the spatial transcriptomics data for the sample.}
+\item{sample_name}{A character string specifying the name of the sample being processed. This will be used in messages and output filenames. Default seurat_obj@project.name.}
 
 \item{output_path}{A character string specifying the directory where the output CSV file will be saved. If \code{NULL}, the results will not be saved to a file. Default is \code{NULL}.}
 
 \item{layer}{A character string indicating the assay layer to use for expression data. Default is \code{"data"}.}
+
+\item{k}{An integer specifying the number of nearest neighbors to consider when \code{method = "knns"}. Default is \code{20}.}
 
 \item{method}{A character string specifying the method to calculate spatial neighbors. Options are:
 \itemize{
@@ -30,8 +30,6 @@ calculate_moranSVGs(
   \item \code{"distance"}: Uses a distance threshold to determine neighbors.
 }
 Default is \code{"knns"}.}
-
-\item{k}{An integer specifying the number of nearest neighbors to consider when \code{method = "knns"}. Default is \code{20}.}
 
 \item{dist}{A numeric value specifying the distance threshold (in microns) for neighbor determination when \code{method = "distance"}. Default is \code{10}.}
 

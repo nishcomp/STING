@@ -2,10 +2,11 @@
 #'
 #' Computes spatially variable genes (SVGs) using Moran's I statistic, saves the results to a CSV file if an output path is provided, and returns the results as a data frame.
 #'
-#' @param sample_name A character string specifying the name of the sample being processed. This will be used in messages and output filenames.
-#' @param sample A Seurat object containing the spatial transcriptomics data for the sample.
+#' @param sample_name A character string specifying the name of the sample being processed. This will be used in messages and output filenames. Default seurat_obj@project.name.
+#' @param seurat_obj A Seurat object containing the spatial transcriptomics data for the sample.
 #' @param output_path A character string specifying the directory where the output CSV file will be saved. If \code{NULL}, the results will not be saved to a file. Default is \code{NULL}.
 #' @param layer A character string indicating the assay layer to use for expression data. Default is \code{"data"}.
+#' @param min_count The minimum number of cells a gene has to be present in (count greater than 0 in a given cell).
 #' @param method A character string specifying the method to calculate spatial neighbors. Options are:
 #'   \itemize{
 #'     \item \code{"knns"}: Uses k-nearest neighbors.
@@ -60,60 +61,45 @@
 #' @importFrom foreach %dopar% foreach
 #' @importFrom stats p.adjust
 #' @export
-calculate_moranSVGs <- function(sample_name, sample, output_path = NULL, layer = "data", method = "knns", k = 20, dist = 10, bin = 8) {
+# function
+calculate_moranSVGs <- function(seurat_obj, sample_name = seurat_obj@project.name, output_path = NULL, layer = "counts", k = 50, min_count = 10) {
   cat("Processing sample:", sample_name, "\n")
 
-  seurat_obj <- sample
+  # Filter genes
+  genes_to_keep <- function(obj, min_count) {
+    expr_data <- GetAssayData(obj, layer = layer)
+    expr_data <- as(expr_data, "dgCMatrix")
+    expr_data <- expr_data[!grepl("^MT-", rownames(expr_data)), ]
+    gene_totals <- rowSums(expr_data > 0)
+    names(gene_totals[gene_totals > min_count])
+  }
 
-  # Preprocess the data
-  expr_data <- GetAssayData(seurat_obj, layer = layer)
+  genes_to_keep <- genes_to_keep(seurat_obj, min_count)
 
   # Get spot coordinates
   spot_coordinates <- GetTissueCoordinates(seurat_obj, scale = NULL)
-
-  if (all(c("x", "y") %in% colnames(spot_coordinates))) {
-    coord_names <- c("x", "y")
-  } else if (all(c("imagerow", "imagecol") %in% colnames(spot_coordinates))) {
-    coord_names <- c("imagerow", "imagecol")
-  } else {
+  coord_names <- intersect(c("x", "y", "imagerow", "imagecol"), colnames(spot_coordinates))
+  if (length(coord_names) != 2) {
     stop("Expected columns ('x', 'y') or ('imagerow', 'imagecol') not found in spot_coordinates.")
   }
   spot_coordinates <- spot_coordinates[, coord_names]
+
+  # Create spatial points
   sp_points <- sf::st_as_sf(spot_coordinates, coords = coord_names)
 
   # Find neighbors and calculate weights
-  find_neighbors_with_weights <- function(seurat_obj, method = c("knns", "distance"), k = 20, dist = 10, bin = 8) {
-    if (!inherits(seurat_obj, "Seurat")) stop("Invalid Seurat object provided")
+  neighbors <- knearneigh(spot_coordinates, k = k)
+  neighbors_list <- knn2nb(neighbors)
+  dist_matrix <- nbdists(neighbors_list, sp_points)
+  decay_weights <- lapply(dist_matrix, function(dist) 1 / (dist + 1e-16))
+  weights <- nb2listw(neighbors_list, decay_weights, style = "B")
 
-    if (method == "distance") {
-      microns_per_pixel <- bin / seurat_obj@images$slice1@scale.factors$spot
-      dist <- dist * microns_per_pixel
-    }
+  cat("Calculated weights for:", seurat_obj@project.name, "\n")
 
-    spot_coordinates <- GetTissueCoordinates(seurat_obj, scale = NULL)
-    spot_coordinates <- spot_coordinates[, coord_names]
-    sp_points <- sf::st_as_sf(spot_coordinates, coords = coord_names)
-    neighbors_list <- if (method == "knns") {
-      knn2nb(knearneigh(spot_coordinates, k = k))
-    } else {
-      dnearneigh(sp_points, d1 = 0, d2 = dist)
-    }
+  # Get expression data for filtered genes
+  expr_data <- GetAssayData(seurat_obj, layer = layer)[genes_to_keep, ]
 
-    dist_matrix <- nbdists(neighbors_list, sf::st_coordinates(sp_points))
-    decay_weights <- lapply(dist_matrix, function(dist) 1 / (dist + 1e-16))
-    decay_weights <- lapply(decay_weights, function(weights) if (length(weights) == 0) NULL else weights)
-
-    weights <- nb2listw(neighbors_list, glist = decay_weights, style = "B", zero.policy = TRUE)
-    list(neighbors_list = neighbors_list, weights = weights)
-  }
-
-  neighbor_result <- find_neighbors_with_weights(seurat_obj, method = method, k = k, dist = dist, bin = bin)
-  neighbors_list <- neighbor_result$neighbors_list
-  weights <- neighbor_result$weights
-
-  cat("Calculated weights for:", sample_name, "\n")
-
-  # Perform Moran's I test in parallel
+  # Parallel computation
   num_cores <- detectCores() - 1
   registerDoParallel(num_cores)
 
@@ -121,18 +107,20 @@ calculate_moranSVGs <- function(sample_name, sample, output_path = NULL, layer =
     gene_name <- rownames(expr_data)[i]
     moran <- moran.test(expr_data[i, ], weights, alternative = "greater")
     data.frame(row.names = gene_name,
+               gene = gene_name,
                I = moran$estimate["Moran I statistic"],
                p.value = moran$p.value,
-               gene = gene_name,
-               stringsAsFactors = FALSE)
+               stringsAsFactors = FALSE
+    )
   }
 
   stopImplicitCluster()
   gc()
 
-  # Adjust p-values
-  results$Adjusted_P <- p.adjust(results$p.value, method = "fdr")
-  results <- results[order(results$I, decreasing = TRUE), ]
+  # Process results
+  results <- results %>%
+    mutate(Adjusted_P = p.adjust(p.value, method = "fdr")) %>%
+    arrange(desc(I))
 
   # Save results if output_path is provided
   if (!is.null(output_path)) {
@@ -146,3 +134,4 @@ calculate_moranSVGs <- function(sample_name, sample, output_path = NULL, layer =
 
   return(results)
 }
+
