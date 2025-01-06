@@ -61,8 +61,8 @@
 #' @importFrom foreach %dopar% foreach
 #' @importFrom stats p.adjust
 #' @export
-# function
 calculate_moranSVGs <- function(seurat_obj, sample_name = seurat_obj@project.name, output_path = NULL, layer = "counts", k = 50, min_count = 10) {
+
   cat("Processing sample:", sample_name, "\n")
 
   # Filter genes
