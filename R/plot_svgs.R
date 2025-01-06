@@ -79,48 +79,45 @@
 #' @importFrom ggrepel geom_text_repel
 
 #' @export
-plot_svgs <- function(df, title = "Spatially Variable Genes", type = c("circular", "linear"), genes = "genes",
-                      morans = "I", category = "category",
-                      range = c(3, 10),
-                      output_file = NULL) {
+plot_svgs <- function(df, title = "Spatially Variable Genes", type = c("circular", "linear"),
+                      genes = "genes", morans = "I", category = "category",
+                      range = c(3, 10), output_file = NULL) {
   type <- match.arg(type)
 
   # Validate input data frame
-  #required_cols <- c("genes", "I", "category")
-  #if (!all(required_cols %in% colnames(df))) {
-    #stop("Input data frame must contain columns: 'genes', 'I', and 'category'.")
-  #}
+  required_cols <- c(genes, morans, category)
+  if (!all(required_cols %in% colnames(df))) {
+    stop(paste("Input data frame must contain columns:", paste(required_cols, collapse = ", ")))
+  }
+
+  # Rename columns to standard names
+  df <- df %>%
+    dplyr::rename(genes = !!genes, I = !!morans, category = !!category)
 
   if (type == "circular") {
     # Sort the dataframe by category and I value
     df <- dplyr::arrange(df, category, dplyr::desc(I))
 
-    # Create edges (connecting all genes to each other)
-    edges <- data.frame(
-      from = rep(df$genes, each = length(df$genes)),
-      to = rep(df$genes, times = length(df$genes))
-    )
-
-    # Remove self-edges (genes connected to themselves)
-    edges <- edges[edges$from != edges$to, ]
-
     # Create vertices (nodes) without the "center" node
     vertices <- data.frame(
       name = df$genes,
-      value = df$I,  # Use 'I' values for node sizes
+      value = df$I,
       category = as.character(df$category)
     )
 
     # Calculate angles for labels
     n <- nrow(vertices)
     vertices$angle <- 90 - 360 * (seq_len(n) - 1) / n
-
-    # Adjust label alignment
     vertices$hjust <- ifelse(vertices$angle < -90, 1, 0)
     vertices$angle <- ifelse(vertices$angle < -90, vertices$angle + 180, vertices$angle)
 
-    # Create graph object (without the "center" node)
-    mygraph <- igraph::graph_from_data_frame(edges, vertices = vertices)
+    # Create graph object (without edges for efficiency)
+    mygraph <- igraph::make_empty_graph(n = nrow(vertices)) %>%
+      igraph::set_vertex_attr("name", value = vertices$name) %>%
+      igraph::set_vertex_attr("value", value = vertices$value) %>%
+      igraph::set_vertex_attr("category", value = vertices$category) %>%
+      igraph::set_vertex_attr("angle", value = vertices$angle) %>%
+      igraph::set_vertex_attr("hjust", value = vertices$hjust)
 
     # Define dynamic color palette
     category_colors <- setNames(
@@ -129,7 +126,6 @@ plot_svgs <- function(df, title = "Spatially Variable Genes", type = c("circular
     )
 
     # Generate circular plot
-    # Make the plot
     p <- ggraph::ggraph(mygraph, layout = 'linear', circular = TRUE) +
       ggraph::geom_node_point(aes(x = x * 1.05, y = y * 1.05, size = value, color = category), alpha = 0.8) +
       ggraph::geom_node_text(aes(x = x * 1.2, y = y * 1.2, label = name, angle = angle, hjust = hjust),
@@ -151,22 +147,23 @@ plot_svgs <- function(df, title = "Spatially Variable Genes", type = c("circular
       ggplot2::labs(color = "Gene Category", size = "I Value", title = title)
 
   } else if (type == "linear") {
-    df <- dplyr::group_by(df, category) %>%
+    df <- df %>%
+      dplyr::group_by(category) %>%
       dplyr::mutate(position = dplyr::row_number()) %>%
       dplyr::ungroup()
 
     p <- ggplot2::ggplot(df, ggplot2::aes(x = position, y = category)) +
-      ggplot2::geom_point(ggplot2::aes(size = I, fill = category), shape = 21, stroke = 1, color="black") + # Filled circles with black border
+      ggplot2::geom_point(ggplot2::aes(size = I, fill = category), shape = 21, stroke = 1, color="black") +
       ggrepel::geom_text_repel(
         ggplot2::aes(label = genes),
         size = 3,
-        box.padding = 0.5, # Adjust padding around labels
+        box.padding = 0.5,
         point.padding = 0.3,
         segment.color = "grey50",
         min.segment.length = 0,
         max.overlaps = Inf
       ) +
-      ggplot2::scale_size_continuous(range = range, name = "I Value") +  # Adjust size range and add a legend title
+      ggplot2::scale_size_continuous(range = range, name = "I Value") +
       ggplot2::scale_fill_brewer(palette = "Set2", name = "Category") +
       ggplot2::theme_bw() +
       ggplot2::theme(title = ggplot2::element_text(face = "bold", hjust = "center"),
