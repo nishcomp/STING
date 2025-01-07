@@ -20,15 +20,62 @@ calculate_moranSVGs(
 
 \item{output_path}{A character string specifying the directory where the output CSV file will be saved. If \code{NULL}, the results will not be saved to a file. Default is \code{NULL}.}
 
-\item{layer}{A character string indicating the assay layer to use for expression data. Default is \code{"counts"}.}
+\item{layer}{A character string indicating the assay layer to use for expression data. Default is \code{"data"}.}
 
-\item{k}{An integer specifying the number of nearest neighbors to consider. Default is \code{50}.}
+\item{k}{An integer specifying the number of nearest neighbors to consider when \code{method = "knns"}. Default is \code{20}.}
 
-\item{min_count}{The minimum number of cells a gene has to be present in (count greater than 0 in a given cell). Default is \code{10}.}
+\item{min_count}{The minimum number of cells a gene has to be present in (count greater than 0 in a given cell).}
+
+\item{method}{A character string specifying the method to calculate spatial neighbors. Options are:
+\itemize{
+  \item \code{"knns"}: Uses k-nearest neighbors.
+  \item \code{"distance"}: Uses a distance threshold to determine neighbors.
+}
+Default is \code{"knns"}.}
+
+\item{dist}{A numeric value specifying the distance threshold (in microns) for neighbor determination when \code{method = "distance"}. Default is \code{10}.}
+
+\item{bin}{A numeric value representing the binning size in microns per pixel. Default is \code{8}.}
 }
 \value{
-A data frame containing the spatially variable genes and their Moran's I statistics.
+A data frame containing the spatially variable genes and their Moran's I statistics. The data frame includes:
+\itemize{
+  \item \code{gene}: Gene name or identifier.
+  \item \code{I}: Moran's I statistic.
+  \item \code{p.value}: P-value for the Moran's I test.
+  \item \code{Adjusted_P}: Adjusted p-value (FDR corrected).
+}
 }
 \description{
 Computes spatially variable genes (SVGs) using Moran's I statistic, saves the results to a CSV file if an output path is provided, and returns the results as a data frame.
+}
+\details{
+This function identifies spatially variable genes by:
+\itemize{
+  \item Calculating spatial neighbors based on either k-nearest neighbors (\code{"knns"}) or distance thresholds (\code{"distance"}).
+  \item Computing Moran's I statistic for each gene's expression values to assess spatial autocorrelation.
+  \item Adjusting p-values using the False Discovery Rate (FDR) method.
+}
+If an \code{output_path} is provided, the results are saved in a CSV file named \code{"<sample_name>_spatially_variable_genes.csv"} in the specified directory.
+}
+\examples{
+\dontrun{
+library(Seurat)
+library(spdep)
+library(doParallel)
+library(foreach)
+
+# Example usage
+sample_name <- "Sample_1"
+sample <- CreateSeuratObject(counts = matrix(rpois(2000, lambda = 10), nrow = 100, ncol = 20))
+output_path <- "~/output/"
+
+results <- calculate_moranSVGs(sample_name = sample_name,
+                               sample = sample,
+                               output_path = output_path,
+                               layer = "data",
+                               method = "knns",
+                               k = 15)
+}
+
 }
