@@ -61,8 +61,22 @@
 #' @importFrom foreach %dopar% foreach
 #' @importFrom stats p.adjust
 #' @export
+
+#' @export
 calculate_moranSVGs <- function(seurat_obj, sample_name = seurat_obj@project.name, output_path = NULL, layer = "counts", k = 50, min_count = 10) {
   cat("Processing sample:", sample_name, "\n")
+
+  # Filter genes
+  expr_data <- GetAssayData(seurat_obj, layer = layer)
+  expr_data <- expr_data[!grepl("^MT-", rownames(expr_data)), ]  # Remove mitochondrial genes
+  print(head(expr_data))
+  expr_mat <- as.matrix(expr_data)
+  gene_totals <- rowSums(expr_mat > 0)
+  print(head(gene_totals))
+  genes_to_keep <- names(gene_totals[gene_totals > min_count])
+  print(head(genes_to_keep))
+  expr_data <- expr_data[genes_to_keep, ]
+  print(head(expr_data))
 
   # Get spot coordinates
   spot_coordinates <- GetTissueCoordinates(seurat_obj, scale = NULL)
@@ -83,9 +97,6 @@ calculate_moranSVGs <- function(seurat_obj, sample_name = seurat_obj@project.nam
   weights <- nb2listw(neighbors_list, decay_weights, style = "B")
 
   cat("Calculated weights for:", seurat_obj@project.name, "\n")
-
-  # Get expression data for filtered genes
-  expr_data <- GetAssayData(seurat_obj, layer = layer)
 
   # Parallel computation
   num_cores <- detectCores() - 1
@@ -122,4 +133,3 @@ calculate_moranSVGs <- function(seurat_obj, sample_name = seurat_obj@project.nam
 
   return(results)
 }
-
