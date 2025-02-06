@@ -56,7 +56,7 @@ Or simply label "others" or "uncategorized" to make it compatible with the plott
 ```r
 plot_svgs(
     df = csvgs_moran_test], 
-    title = "SVGS in the Tissue", 
+    title = "Your Title", 
     type = "circular", 
     genes = "gene", 
     range = c(1, 10), 
@@ -71,7 +71,7 @@ plot_svgs(
 ```r
 plot_svgs(
     df = csvgs_moran_test], 
-    title = "SVGS in the Tissue", 
+    title = "Your Title", 
     type = "linear", 
     genes = "gene", 
     range = c(1, 10), 

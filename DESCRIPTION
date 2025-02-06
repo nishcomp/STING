@@ -23,4 +23,5 @@ Imports:
     Seurat,
     doParallel,
     parallel,
-    stats
+    stats,
+    RANN
