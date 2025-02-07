@@ -9,7 +9,7 @@
 #'
 #'
 hotspot_neighbors <- function(seurat_obj, distance_threshold, metadata_column) {
-  coords <- GetTissueCoordinates(seurat_obj, scale=NULL)
+  coords <- GetTissueCoordinates(seurat_obj, scale=NULL)[, c(1,2)]
 
   # hotspot and non-hotspot cells
   regions_data <- FetchData(seurat_obj, vars = metadata_column)
