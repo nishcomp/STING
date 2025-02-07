@@ -5,9 +5,17 @@
 #' @param seurat_obj A Seurat object containing spatial transcriptomics data.
 #' @param distance Distance to extend from hotspots to define neighbors
 #' @param metada_column A metadta column of the Seurat Object which has the "hotspot" classification.
-#' export
+
+#' @examples
+#' \dontrun{
+#' seurat_obj <- hotspot_neighbors(seurat_obj, distance_threshold = 50, metadata_column = "hotspot_GeneX")
+#' }
 #'
+#' @importFrom Seurat GetTissueCoordinates FetchData
+#' @importFrom RANN nn2
 #'
+#' @export
+
 hotspot_neighbors <- function(seurat_obj, distance_threshold, metadata_column) {
   coords <- GetTissueCoordinates(seurat_obj, scale=NULL)[, c(1,2)]
 

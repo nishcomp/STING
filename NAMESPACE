@@ -2,6 +2,7 @@
 
 export(calculate_moranSVGs)
 export(find_hotspots)
+export(hotspot_neighbors)
 export(plot_svgs)
 importFrom(RANN,nn2)
 importFrom(RColorBrewer,brewer.pal)

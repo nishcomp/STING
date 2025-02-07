@@ -11,9 +11,14 @@ hotspot_neighbors(seurat_obj, distance_threshold, metadata_column)
 
 \item{distance}{Distance to extend from hotspots to define neighbors}
 
-\item{metada_column}{A metadta column of the Seurat Object which has the "hotspot" classification.
-export}
+\item{metada_column}{A metadta column of the Seurat Object which has the "hotspot" classification.}
 }
 \description{
 Identifies the neighbors of hotspots by extending upto a specified radius from the hotspot
+}
+\examples{
+\dontrun{
+seurat_obj <- hotspot_neighbors(seurat_obj, distance_threshold = 50, metadata_column = "hotspot_GeneX")
+}
+
 }
