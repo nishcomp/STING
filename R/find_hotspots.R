@@ -44,7 +44,7 @@ find_hotspots <- function(seurat_object, gene_name, num_neighbors = 20, neighbor
 
   #initial_hotspot_spots <- which(gene_expression >= mean(gene_expression[gene_expression >0]))
   initial_hotspot_spots <- which(gene_expression >= expression_threshold)
-  coordinates <- GetTissueCoordinates(seurat_object, scale = NULL)
+  coordinates <- GetTissueCoordinates(seurat_object, scale = NULL)[, c(1,2)]
 
   # k-nearest neighbors for each spot using k-d tree
   kdtree <- nn2(coordinates, k = num_neighbors + 1)
